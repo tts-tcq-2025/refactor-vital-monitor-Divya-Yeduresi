@@ -1,47 +1,44 @@
+#include <gtest/gtest.h>
 #include "./monitor.h"
-#include <stdio.h>
  
-// Simple test without external dependencies
-int main() {
-    printf("=== Medical Monitor Test Program ===\n\n");
-   
-    // Test normal values
-    printf("Testing normal values (98.6°F, 72 bpm, 98%% SpO2):\n");
-    int result1 = vitalsOk(98.6, 72, 98);
-    printf("Result: %s\n\n", result1 ? "VITALS OK" : "VITALS NOT OK");
-   
-    // Test out of range temperature
-    printf("Testing high temperature (103°F, 72 bpm, 98%% SpO2):\n");
-    int result2 = vitalsOk(103, 72, 98);
-    printf("Result: %s\n\n", result2 ? "VITALS OK" : "VITALS NOT OK");
-   
-    // Test out of range pulse
-    printf("Testing high pulse rate (98.6°F, 110 bpm, 98%% SpO2):\n");
-    int result3 = vitalsOk(98.6, 110, 98);
-    printf("Result: %s\n\n", result3 ? "VITALS OK" : "VITALS NOT OK");
-   
-    // Test out of range spo2
-    printf("Testing low SpO2 (98.6°F, 72 bpm, 85%% SpO2):\n");
-    int result4 = vitalsOk(98.6, 72, 85);
-    printf("Result: %s\n\n", result4 ? "VITALS OK" : "VITALS NOT OK");
-   
-    printf("=== Individual Function Tests ===\n");
-   
-    // Test individual functions
-    printf("Temperature 98.6°F: %s\n", isTemperatureOk(98.6) ? "OK" : "NOT OK");
-    printf("Pulse Rate 72 bpm: %s\n", isPulseRateOk(72) ? "OK" : "NOT OK");
-    printf("SpO2 98%%: %s\n\n", isSpo2Ok(98) ? "OK" : "NOT OK");
-   
-    printf("=== Boundary Value Tests ===\n");
-   
-    // Test boundary values
-    printf("Temperature 95°F (boundary): %s\n", isTemperatureOk(95) ? "OK" : "NOT OK");
-    printf("Temperature 102°F (boundary): %s\n", isTemperatureOk(102) ? "OK" : "NOT OK");
-    printf("Pulse Rate 60 bpm (boundary): %s\n", isPulseRateOk(60) ? "OK" : "NOT OK");
-    printf("Pulse Rate 100 bpm (boundary): %s\n", isPulseRateOk(100) ? "OK" : "NOT OK");
-    printf("SpO2 90%% (boundary): %s\n", isSpo2Ok(90) ? "OK" : "NOT OK");
-   
-    printf("\n=== Test Complete ===\n");
-   
-    return 0;
+// Test for overall vitals function
+TEST(Monitor, NotOkWhenAnyVitalIsOffRange) {
+  ASSERT_FALSE(vitalsOk(99, 102, 70));  // pulse rate too high
+  ASSERT_TRUE(vitalsOk(98.1, 70, 98));  // all vitals normal
 }
+ 
+// Test individual temperature function
+TEST(Monitor, TemperatureTests) {
+  ASSERT_FALSE(isTemperatureOk(94));    // too low
+  ASSERT_FALSE(isTemperatureOk(103));   // too high
+  ASSERT_TRUE(isTemperatureOk(98.6));   // normal
+  ASSERT_TRUE(isTemperatureOk(95));     // boundary low
+  ASSERT_TRUE(isTemperatureOk(102));    // boundary high
+}
+ 
+// Test individual pulse rate function
+TEST(Monitor, PulseRateTests) {
+  ASSERT_FALSE(isPulseRateOk(59));      // too low
+  ASSERT_FALSE(isPulseRateOk(101));     // too high
+  ASSERT_TRUE(isPulseRateOk(75));       // normal
+  ASSERT_TRUE(isPulseRateOk(60));       // boundary low
+  ASSERT_TRUE(isPulseRateOk(100));      // boundary high
+}
+ 
+// Test individual spo2 function
+TEST(Monitor, Spo2Tests) {
+  ASSERT_FALSE(isSpo2Ok(89));           // too low
+  ASSERT_TRUE(isSpo2Ok(95));            // normal
+  ASSERT_TRUE(isSpo2Ok(90));            // boundary
+  ASSERT_TRUE(isSpo2Ok(100));           // maximum normal
+}
+ 
+// Test combinations of vitals
+TEST(Monitor, CombinationTests) {
+  ASSERT_FALSE(vitalsOk(94, 70, 95));   // temperature too low
+  ASSERT_FALSE(vitalsOk(98, 59, 95));   // pulse too low
+  ASSERT_FALSE(vitalsOk(98, 70, 89));   // spo2 too low
+  ASSERT_FALSE(vitalsOk(103, 101, 89)); // all vitals out of range
+  ASSERT_TRUE(vitalsOk(98.6, 72, 98));  // all vitals normal
+}
+ 
